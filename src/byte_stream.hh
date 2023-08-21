@@ -30,6 +30,7 @@ public:
   const Reader& reader() const;
   Writer& writer();
   const Writer& writer() const;
+  uint64_t capacity() const { return capacity_; }
 };
 
 class Writer : public ByteStream

@@ -2,10 +2,20 @@
 
 #include "byte_stream.hh"
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
 
 class Reassembler
 {
+private:
+  uint64_t _first_unassembled = 0;
+  uint64_t _first_unassembled_pos = 0;
+  uint64_t _bytes_pending = 0;
+  uint64_t _end = 0xffffffffffffffff;
+  std::string _buffer {};
+  std::string _mark {};
+
 public:
   /*
    * Insert a new substring to be reassembled into a ByteStream.
