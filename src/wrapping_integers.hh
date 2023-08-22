@@ -17,6 +17,8 @@ public:
   explicit Wrap32( uint32_t raw_value ) : raw_value_( raw_value ) {}
 
   /* Construct a Wrap32 given an absolute sequence number n and the zero point. */
+  // Learning cpp: Static member functions are not associated with any object. When called, they have no this
+  // pointer.
   static Wrap32 wrap( uint64_t n, Wrap32 zero_point );
 
   /*

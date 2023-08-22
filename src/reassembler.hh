@@ -41,4 +41,5 @@ public:
 
   // How many bytes are stored in the Reassembler itself?
   uint64_t bytes_pending() const;
+  uint64_t first_unassembled() const { return _first_unassembled; }
 };
