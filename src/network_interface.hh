@@ -1,15 +1,19 @@
 #pragma once
 
 #include "address.hh"
+#include "arp_message.hh"
 #include "ethernet_frame.hh"
+#include "ethernet_header.hh"
 #include "ipv4_datagram.hh"
 
+#include <cstdint>
 #include <iostream>
-#include <list>
 #include <optional>
 #include <queue>
 #include <unordered_map>
-#include <utility>
+
+const uint64_t ARPWaitingTime = 5000;
+const uint64_t MappingExpiryTime = 30000;
 
 // A "network interface" that connects IP (the internet layer, or network layer)
 // with Ethernet (the network access layer, or link layer).
@@ -35,11 +39,42 @@
 class NetworkInterface
 {
 private:
+  class Status
+  {
+    uint64_t ms_ {};
+    bool waiting_reply_ { true };
+    bool address_valid_ { false };
+
+  public:
+    std::queue<InternetDatagram> queue_ {};
+    bool waiting_for_reply() const { return waiting_reply_; }
+    bool address_valid() const { return address_valid_; }
+    bool check_valid() { return address_valid_ = ms_ <= MappingExpiryTime; }
+    bool check_waiting() const { return ms_ > ARPWaitingTime; }
+    void add( uint64_t ms_to_add ) { ms_ += ms_to_add; }
+    void reset() { ms_ = 0; }
+    void set_waiting( bool x ) { waiting_reply_ = x; }
+    void set_valid( bool x ) { address_valid_ = x; }
+  };
+
+  struct EthernetAddressWithStatus
+  {
+    EthernetAddress ethernet_address_ {};
+    Status status_ {};
+  };
+
   // Ethernet (known as hardware, network-access, or link-layer) address of the interface
   EthernetAddress ethernet_address_;
 
   // IP (known as Internet-layer or network-layer) address of the interface
   Address ip_address_;
+
+  std::queue<EthernetFrame> ethernet_frames_ {};
+  std::unordered_map<uint32_t, EthernetAddressWithStatus> mapping_ {};
+
+  void send_arp_request( uint32_t next_hop );
+
+  void add_mapping( uint32_t ip_address, EthernetAddress ethernet_address );
 
 public:
   // Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer)
