@@ -1,9 +1,15 @@
 #pragma once
 
+#include "address.hh"
+#include "ipv4_datagram.hh"
 #include "network_interface.hh"
 
+#include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <queue>
+#include <sys/types.h>
+#include <unordered_map>
 
 // A wrapper for NetworkInterface that makes the host-side
 // interface asynchronous: instead of returning received datagrams
@@ -29,6 +35,7 @@ public:
   // \param[in] frame the incoming Ethernet frame
   void recv_frame( const EthernetFrame& frame )
   {
+    std::cerr << "received datagram\n";
     auto optional_dgram = NetworkInterface::recv_frame( frame );
     if ( optional_dgram.has_value() ) {
       datagrams_in_.push( std::move( optional_dgram.value() ) );
@@ -44,6 +51,7 @@ public:
 
     InternetDatagram datagram = std::move( datagrams_in_.front() );
     datagrams_in_.pop();
+
     return datagram;
   }
 };
@@ -52,8 +60,23 @@ public:
 // performs longest-prefix-match routing between them.
 class Router
 {
+
+  struct Route
+  {
+    uint32_t route_prefix;
+    uint8_t prefix_length;
+    std::optional<Address> next_hop; // Gateway
+    size_t interface_num;
+
+    Route( uint32_t a, uint8_t b, std::optional<Address> c, size_t d )
+      : route_prefix( a ), prefix_length( b ), next_hop( c ), interface_num( d )
+    {}
+  };
   // The router's collection of network interfaces
   std::vector<AsyncNetworkInterface> interfaces_ {};
+  std::vector<Route> routes_ {};
+
+  void route_datagram( InternetDatagram dgram );
 
 public:
   // Add an interface to the router

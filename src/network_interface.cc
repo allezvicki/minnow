@@ -56,6 +56,7 @@ void NetworkInterface::add_mapping( uint32_t ip_address, EthernetAddress etherne
 // Address::ipv4_numeric() method.
 void NetworkInterface::send_datagram( const InternetDatagram& dgram, const Address& next_hop )
 {
+  cerr << "sending datagram, next hop is  " << next_hop.to_string() << endl;
   auto it = mapping_.find( next_hop.ipv4_numeric() );
   if ( it != mapping_.end() ) { // If not the first time knowing about this address
     auto& sts = it->second.status_;
@@ -151,7 +152,8 @@ optional<EthernetFrame> NetworkInterface::maybe_send()
 {
   optional<EthernetFrame> ef {};
   if ( !ethernet_frames_.empty() ) {
-    ef = std::move( ethernet_frames_.front() );
+    /* ef = std::move( ethernet_frames_.front() ); */
+    ef = ethernet_frames_.front();
     ethernet_frames_.pop();
   }
   return ef;
